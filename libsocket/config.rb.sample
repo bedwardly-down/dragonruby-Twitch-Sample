@@ -1,0 +1,15 @@
+# Instructions: copy or rename to config.rb and fill all of this in
+# 
+# NOTE: would highly recommend setting up a Twitch bot account for this so everyone that plays your game can just play it without having to
+# 
+# PASS - go to https://twitchapps.com/tmi/ , click Connect and copy and paste the result in between the quotation marks (including the oauth part)
+# USER - the twitch username associated with your account
+# NICK - any name you'd like to use for the logs
+# CHANNEL - your Twitch channel name
+# 
+module Config
+  PASS = ""
+  USER = ""
+  NICK = ""
+  CHANNEL = ""
+end

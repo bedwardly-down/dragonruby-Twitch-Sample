@@ -1,0 +1,5 @@
+require 'libsocket/config.rb'
+require 'libsocket/socket.rb'
+require 'app/twitch.rb'
+require 'app/game.rb'
+require 'app/tick.rb'
