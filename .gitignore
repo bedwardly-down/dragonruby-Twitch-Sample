@@ -1,0 +1,6 @@
+builds/
+logs/
+exceptions/
+libsocket/config.rb
+config/
+Smaug.toml
