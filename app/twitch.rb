@@ -14,7 +14,7 @@ class Twitch
     end
 
     keep_alive args.state.tick_count if @logged_in == true
-    parse_chat
+    parse_chat args
   end
 
   def login
@@ -36,7 +36,13 @@ class Twitch
     end
   end
 
-  def parse_chat
+  def parse_chat args
     contents = $gtk.read_file("logs/messages.txt")
+    args.outputs.labels << {
+      x: 50,
+      y: 100,
+      text: "#{contents}\n",
+      size_enum: 1
+    }
   end
 end
