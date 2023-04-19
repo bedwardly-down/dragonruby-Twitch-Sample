@@ -3,7 +3,7 @@ class Game
   attr_accessor :twitch
 
   def defaults
-    self.twitch ||= Twitch.new 3
+    self.twitch ||= Twitch.new 3, "logs/messages.txt"
   end
 
   def tick

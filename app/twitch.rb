@@ -1,11 +1,12 @@
 class Twitch
-  attr_accessor :socket, :logged_in, :ping, :timeout
+  attr_accessor :socket, :logged_in, :ping, :timeout, :path
 
-  def initialize timeout
+  def initialize timeout, path
     self.socket ||= Socket.new "irc.twitch.tv", "6667"
     self.logged_in ||= false
     self.ping ||= 0
     self.timeout ||= timeout
+    self.path ||= path
   end
 
   def tick args
@@ -30,14 +31,14 @@ class Twitch
       @ping += 1
       if @ping == @timeout
         @socket.send_message "PING\n"
-        @socket.receive_message
+        @socket.receive_message @path
         @ping = 0
       end
     end
   end
 
   def parse_chat args
-    contents = $gtk.read_file("logs/messages.txt")
+    contents = $gtk.read_file(@path)
     args.outputs.labels << {
       x: 50,
       y: 100,
