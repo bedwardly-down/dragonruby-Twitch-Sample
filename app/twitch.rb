@@ -1,6 +1,11 @@
+$gtk.ffi_misc.gtk_dlopen("libsocket")
+include FFI::SOCKET
+
 class Twitch
   attr_accessor :socket, :address, :port, :logged_in, :ping, :timeout, :path, :chat, :max_messages_held, :max_pings
 
+  # timeout - how many seconds between each PING to keep the connection active
+  # path - where you want the Twitch chat written; directory must exist but the file will be temporary
   def initialize timeout, path
     self.address ||= "irc.twitch.tv"
     self.port ||= "6667"
