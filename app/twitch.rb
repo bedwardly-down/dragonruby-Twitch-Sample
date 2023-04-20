@@ -25,7 +25,7 @@ class Twitch
   def login
     @socket.send_message "PASS #{Config::PASS}\n"
     @socket.send_message "NICK #{Config::NICK}\n"
-    @socket.send_message "sender #{Config::sender}\n"
+    @socket.send_message "sender #{Config::USER}\n"
     @socket.send_message "JOIN ##{Config::CHANNEL}\n"
     @logged_in = true
   end
