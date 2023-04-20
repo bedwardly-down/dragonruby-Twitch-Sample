@@ -1,8 +1,10 @@
 class Twitch
-  attr_accessor :socket, :logged_in, :ping, :timeout, :path, :chat, :max_messages_held, :max_pings
+  attr_accessor :socket, :address, :port, :logged_in, :ping, :timeout, :path, :chat, :max_messages_held, :max_pings
 
   def initialize timeout, path
-    self.socket ||= Socket.new "irc.twitch.tv", "6667"
+    self.address ||= "irc.twitch.tv"
+    self.port ||= "6667"
+    self.socket ||= Socket.new @address, @port
     self.logged_in ||= false
     self.ping ||= 0
     self.timeout ||= timeout
@@ -19,9 +21,34 @@ class Twitch
 
     keep_alive args.state.tick_count if @logged_in == true
     parse_chat args
-    print_chat args
   end
 
+  # Use these outside of here when needed;
+  # Close off a connection
+  def close
+    @socket.close_socket
+  end
+
+  # Open a socket back up after closing it
+  def open
+    @socket.open_socket @address, @port
+  end
+
+  def shutdown
+    @socket.shutdown_socket
+  end
+
+  # show the info on screen; good for debugging
+  def print_chat args
+    args.outputs.labels << {
+      x: 50,
+      y: 100,
+      text: "#{@ping}: #{@chat.last(1)}",
+      size_enum: 1
+    }
+  end
+
+  # typically won't need to use any methods below here at all in your games
   def login
     @socket.send_message "PASS #{Config::PASS}\n"
     @socket.send_message "NICK #{Config::NICK}\n"
@@ -117,14 +144,5 @@ class Twitch
 
   def clear_chat_log
     $gtk.write_file(@path, "\n")
-  end
-
-  def print_chat args
-    args.outputs.labels << {
-      x: 50,
-      y: 100,
-      text: "#{@ping}: #{@chat.last(1)}",
-      size_enum: 1
-    }
   end
 end
