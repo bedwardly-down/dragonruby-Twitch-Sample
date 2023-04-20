@@ -7,7 +7,7 @@ class Twitch
     self.ping ||= 0
     self.timeout ||= timeout
     self.path ||= path
-    self.parsed_chat ||= []
+    self.parsed_chat ||= [{}]
     self.max_messages_held ||= 25
     self.max_pings ||= 60
   end
@@ -25,7 +25,7 @@ class Twitch
   def login
     @socket.send_message "PASS #{Config::PASS}\n"
     @socket.send_message "NICK #{Config::NICK}\n"
-    @socket.send_message "USER #{Config::USER}\n"
+    @socket.send_message "sender #{Config::sender}\n"
     @socket.send_message "JOIN ##{Config::CHANNEL}\n"
     @logged_in = true
   end
@@ -59,9 +59,17 @@ class Twitch
       }
 
     contents.each do |i|
-      # grab a message from chat and empty the file that contains Twitch messages
+      # grab a message and its sender from chat and empty the file that contains Twitch messages
       if i.include?("PRIVMSG")
-        @parsed_chat << i.strip
+        i.strip
+        sender = parse_sender i
+        message = parse_message i
+        @parsed_chat.push(
+          {
+            sender: sender,
+            message: message
+          }
+        )
         clear_chat_log
       end
     end
@@ -74,6 +82,37 @@ class Twitch
       clear_chat_log
       @ping = @ping % @timeout
     end
+  end
+
+  def parse_sender chat
+    str = ""
+    arr = "#{chat}"
+      .split(' ')
+    arr.each do |i|
+      if i.include?("tmi")
+        arr2 = i.strip
+          .sub('!', ' ')
+          .sub(':','')
+          .split(' ')
+        str = arr2.first
+      end
+    end
+    return str
+  end
+
+  def parse_message chat
+    str = ""
+    arr = "#{chat}"
+      .split(' ')
+    arr.each do |i|
+      if i.include?("tmi") == false
+        arr2 = i.strip
+          .sub(':','')
+          .split(' ')
+        str = arr2.last
+      end
+    end
+    return str
   end
 
   def clear_chat_log
