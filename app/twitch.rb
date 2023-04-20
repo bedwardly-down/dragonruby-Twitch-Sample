@@ -1,5 +1,5 @@
 class Twitch
-  attr_accessor :socket, :logged_in, :ping, :timeout, :path
+  attr_accessor :socket, :logged_in, :ping, :timeout, :path, :parsed_chat
 
   def initialize timeout, path
     self.socket ||= Socket.new "irc.twitch.tv", "6667"
@@ -7,6 +7,7 @@ class Twitch
     self.ping ||= 0
     self.timeout ||= timeout
     self.path ||= path
+    self.parsed_chat ||= []
   end
 
   def tick args
@@ -16,6 +17,7 @@ class Twitch
 
     keep_alive args.state.tick_count if @logged_in == true
     parse_chat args
+    print_chat args
   end
 
   def login
@@ -38,11 +40,31 @@ class Twitch
   end
 
   def parse_chat args
-    contents = $gtk.read_file(@path)
+    contents = "#{$gtk.read_file(@path)}".split("\n")
+      .reject { |line|
+        line.start_with?(":tmi.twitch.tv 00") ||
+        line.start_with?(":tmi.twitch.tv 3") ||
+        line.start_with?("PONG") ||
+        line.start_with?("PING") ||
+        line.include?("JOIN ##{Config::CHANNEL}") ||
+        line.include?(":-") ||
+        line.include?(":>") ||
+        line.include?(":Welcome") ||
+        line.include?("\x7f") ||
+        line.include?("tv 353") ||
+        line.include?("tv 366") 
+      }
+
+    contents.each do |i|
+      @parsed_chat << i
+    end
+  end
+
+  def print_chat args
     args.outputs.labels << {
       x: 50,
       y: 100,
-      text: "#{contents}\n",
+      text: "#{@parsed_chat}",
       size_enum: 1
     }
   end
