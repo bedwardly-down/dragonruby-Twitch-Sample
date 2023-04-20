@@ -1,5 +1,5 @@
 class Twitch
-  attr_accessor :socket, :logged_in, :ping, :timeout, :path, :parsed_chat
+  attr_accessor :socket, :logged_in, :ping, :timeout, :path, :parsed_chat, :max_messages_held, :max_pings
 
   def initialize timeout, path
     self.socket ||= Socket.new "irc.twitch.tv", "6667"
@@ -8,6 +8,8 @@ class Twitch
     self.timeout ||= timeout
     self.path ||= path
     self.parsed_chat ||= []
+    self.max_messages_held ||= 25
+    self.max_pings ||= 60
   end
 
   def tick args
@@ -31,16 +33,17 @@ class Twitch
   def keep_alive tick_count
     if tick_count % 60 == 0
       @ping += 1
-      if @ping == @timeout
+      if @ping % @timeout == 0
         @socket.send_message "PING\n"
         @socket.receive_message @path
-        @ping = 0
       end
     end
   end
 
   def parse_chat args
-    contents = "#{$gtk.read_file(@path)}".split("\n")
+    # read chat from log and make it mostly useful
+    contents = "#{$gtk.read_file(@path)}"
+      .split("\n")
       .reject { |line|
         line.start_with?(":tmi.twitch.tv 00") ||
         line.start_with?(":tmi.twitch.tv 3") ||
@@ -56,15 +59,32 @@ class Twitch
       }
 
     contents.each do |i|
-      @parsed_chat << i
+      # grab a message from chat and empty the file that contains Twitch messages
+      if i.include?("PRIVMSG")
+        @parsed_chat << i.strip
+        clear_chat_log
+      end
     end
+
+    # keep parsed_chat from getting too large
+    @parsed_chat.pop if @parsed_chat.count > @max_messages_held
+
+    # empty chat file when max amount of pings are reached to keep from blowing up on system
+    if @ping >= @max_pings
+      clear_chat_log
+      @ping = @ping % @timeout
+    end
+  end
+
+  def clear_chat_log
+    $gtk.write_file(@path, "\n")
   end
 
   def print_chat args
     args.outputs.labels << {
       x: 50,
       y: 100,
-      text: "#{@parsed_chat}",
+      text: "#{@ping}: #{@parsed_chat.last(1)}",
       size_enum: 1
     }
   end
