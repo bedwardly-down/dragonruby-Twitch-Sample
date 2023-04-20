@@ -1,5 +1,5 @@
 class Twitch
-  attr_accessor :socket, :logged_in, :ping, :timeout, :path, :parsed_chat, :max_messages_held, :max_pings
+  attr_accessor :socket, :logged_in, :ping, :timeout, :path, :chat, :max_messages_held, :max_pings
 
   def initialize timeout, path
     self.socket ||= Socket.new "irc.twitch.tv", "6667"
@@ -7,7 +7,7 @@ class Twitch
     self.ping ||= 0
     self.timeout ||= timeout
     self.path ||= path
-    self.parsed_chat ||= [{}]
+    self.chat ||= [{}]
     self.max_messages_held ||= 25
     self.max_pings ||= 60
   end
@@ -25,7 +25,7 @@ class Twitch
   def login
     @socket.send_message "PASS #{Config::PASS}\n"
     @socket.send_message "NICK #{Config::NICK}\n"
-    @socket.send_message "sender #{Config::USER}\n"
+    @socket.send_message "USER #{Config::USER}\n"
     @socket.send_message "JOIN ##{Config::CHANNEL}\n"
     @logged_in = true
   end
@@ -64,7 +64,7 @@ class Twitch
         i.strip
         sender = parse_sender i
         message = parse_message i
-        @parsed_chat.push(
+        @chat.push(
           {
             sender: sender,
             message: message
@@ -74,8 +74,8 @@ class Twitch
       end
     end
 
-    # keep parsed_chat from getting too large
-    @parsed_chat.pop if @parsed_chat.count > @max_messages_held
+    # keep chat from getting too large
+    @chat.pop if @chat.count > @max_messages_held
 
     # empty chat file when max amount of pings are reached to keep from blowing up on system
     if @ping >= @max_pings
@@ -123,7 +123,7 @@ class Twitch
     args.outputs.labels << {
       x: 50,
       y: 100,
-      text: "#{@ping}: #{@parsed_chat.last(1)}",
+      text: "#{@ping}: #{@chat.last(1)}",
       size_enum: 1
     }
   end
